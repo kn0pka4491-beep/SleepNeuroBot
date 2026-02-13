@@ -100,7 +100,7 @@ async def ask_q4(message):
 
 async def ask_q5(message):
     keyboard = kb("q5")
-    keyboard.add(types.InlineKeyboardButton("✅ Завершить тест", callback_data="finish"))
+    keyboard.add(types.InlineKeyboardButton("callback_data="finish"))
     await message.answer(
         "😴 *Вопрос 5*\n\nЕсть ли дневная сонливость?",
         reply_markup=keyboard,
@@ -135,11 +135,24 @@ async def process_answer(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data({prefix: int(value)})
     await callback.answer()
 
-    next_step = {
-        "q1": (SleepTest.q2, ask_q2),
-        "q2": (SleepTest.q3, ask_q3),
-        "q3": (SleepTest.q4, ask_q4),
-        "q4": (SleepTest.q5, ask_q5),
+    if prefix == "q1":
+        await state.set_state(SleepTest.q2)
+        await ask_q2(callback.message)
+
+    elif prefix == "q2":
+        await state.set_state(SleepTest.q3)
+        await ask_q3(callback.message)
+
+    elif prefix == "q3":
+        await state.set_state(SleepTest.q4)
+        await ask_q4(callback.message)
+
+    elif prefix == "q4":
+        await state.set_state(SleepTest.q5)
+        await ask_q5(callback.message)
+
+    elif prefix == "q5":
+        await finish_test(callback, state)
     }
 
     if prefix in next_step:
@@ -152,7 +165,7 @@ async def process_answer(callback: types.CallbackQuery, state: FSMContext):
 # FINISH
 # ======================
 @dp.callback_query_handler(lambda c: c.data == "finish", state=SleepTest.q5)
-async def finish(callback: types.CallbackQuery, state: FSMContext):
+async def finish_test(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     score = sum(data.values())
 
